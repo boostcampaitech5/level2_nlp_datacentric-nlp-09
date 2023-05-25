@@ -222,6 +222,6 @@ pyrightconfig.json
 
 
 code/*
-data/*
 config/*
 submission/*
+*.csv
