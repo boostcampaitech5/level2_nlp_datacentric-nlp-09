@@ -224,3 +224,4 @@ pyrightconfig.json
 code/*
 data/*
 config/*
+submission/*
