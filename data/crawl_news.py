@@ -14,8 +14,8 @@ def crawl_pages(topic):
         list : 각 뉴스 제목을 원소로 하는 list
     """
     title_list = []
-    for i in range(1, topics_dict[topic][0]+1):
-        url = topics_dict[topic][1].replace("1", str(i))
+    for page in range(1, topics_dict[topic][0]+1):
+        url = topics_dict[topic][1]+str(page)
 
         # 서버 요청
         res = requests.get(url)
@@ -97,18 +97,18 @@ def concat_with_origin(train_path, df, version):
 
 if __name__ == "__main__":
     # 데이터 버전 변경한 뒤 실행
-    train_path = "/opt/ml/level2_nlp_datacentric-nlp-09/data/train_v1.csv"
-    version = "v1.1"
+    train_path = "/opt/ml/level2_nlp_datacentric-nlp-09/data/train_v0.csv"
+    version = "v0.3"
 
     topics = ["정치", "경제", "사회", "생활문화", "세계", "IT과학", "스포츠"]
-    topics_dict = {"정치": [14, "https://www.yna.co.kr/politics/all/1"],
-                   "경제": [20, "https://www.yna.co.kr/economy/all/1"],
-                   "사회": [20, "https://www.yna.co.kr/society/all/1"],
-                   "생활": [14, "https://www.yna.co.kr/lifestyle/all/1"],
-                   "문화": [10, "https://www.yna.co.kr/culture/all/1"],
-                   "세계": [20, "https://www.yna.co.kr/international/all/1"],
-                   "IT과학": [20, "https://www.yna.co.kr/industry/technology-science/1"],
-                   "스포츠": [11, "https://www.yna.co.kr/sports/all/1"]}
+    topics_dict = {"정치": [14, "https://www.yna.co.kr/politics/all/"],
+                   "경제": [20, "https://www.yna.co.kr/economy/all/"],
+                   "사회": [20, "https://www.yna.co.kr/society/all/"],
+                   "생활": [14, "https://www.yna.co.kr/lifestyle/all/"],
+                   "문화": [10, "https://www.yna.co.kr/culture/all/"],
+                   "세계": [20, "https://www.yna.co.kr/international/all/"],
+                   "IT과학": [20, "https://www.yna.co.kr/industry/technology-science/"],
+                   "스포츠": [11, "https://www.yna.co.kr/sports/all/"]}
 
     # ag_dataset에 크롤링한 데이터를 모은 뒤 한번에 train data와 결합
     ag_dataset = pd.DataFrame(columns=["ID", "input_text", "label_text", "target",
