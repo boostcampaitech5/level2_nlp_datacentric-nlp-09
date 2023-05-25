@@ -1,6 +1,9 @@
 import pandas as pd
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
+from jamo import h2j, j2hcj
+from g2pk import G2p
+import re
 
 
 def temp_cleaning(df):
@@ -39,8 +42,9 @@ def train_test_split_with_drop_duplicates(total_df: pd.DataFrame):
     return train_drop, eval_drop
 
 
-def drop_label_errors(df_with_label_text):
+def drop_label_errors(df_with_label_text): # 사용 금지
     """
+    (사용 금지)
     label_text와 annotations column을 포함하는 데이터에서,
     label_text와 label_text_from_annotations가 다른 경우 label error로 판단하여 제거합니다.
 
@@ -127,3 +131,93 @@ def drop_label_errors(df_with_label_text):
     df_with_label_text = df_with_label_text.drop(index=label_error_data.index)
 
     return df_with_label_text
+
+
+def drop_g2p_errors(df: pd.DataFrame):
+    """
+    데이터 내 G2P 에러 데이터를 제거합니다.
+    원본과 비교했을 때,
+    (1) 숫자가 사라졌는가(한글로 바뀌었는가)
+    (2) 영어가 사라졌는가(한글로 바뀌었는가)
+    (3) 받침이 사라졌는가(전체 자모 개수가 줄었는가)
+    (4) 어절의 초성에 쌍자음이 생겼는가
+    의 기준으로 phoneme 데이터를 판단하며, 위 과정 이후 남은 G2P 데이터는
+    (5) G2P 변환기(g2pk.G2p())를 이용하여, ID가 동일한 두 문장 중 한 문장을 G2P 변환할 시 다른 하나로 변경되는지의 여부로 문장을 판별합니다.
+
+    Args:
+        df (pd.DataFrame): DataFrame 형태의 데이터를 입력 받습니다.
+
+    Returns:
+        df_ge (df.DataFrame): G2P 에러가 제거된 DataFrame 형태의 데이터를 출력합니다.
+    """
+    errors = df[df.duplicated(subset='ID', keep=False)].sort_index()
+    errors_copy = errors.copy()
+
+    g2p = G2p()
+    error_indices = []
+    for (idx1, e1), (idx2, e2) in zip(errors_copy.iloc[:-1:2].iterrows(), errors_copy.iloc[1::2].iterrows()):
+        if e1.input_text == e2.input_text:
+            continue
+        
+        input_words1, input_words2 = e1.input_text.split(), e2.input_text.split()
+
+        error_idx = None
+        for iw1, iw2 in zip(input_words1, input_words2):
+            jamo_iw1, jamo_iw2 = j2hcj(h2j(iw1)), j2hcj(h2j(iw2))
+
+            # 숫자가 사라졌는가
+            numeric_pattern = r"\d"
+            if not re.search(numeric_pattern, iw1) and re.search(numeric_pattern, iw2):
+                error_idx = idx1
+                break
+            elif re.search(numeric_pattern, iw1) and not re.search(numeric_pattern, iw2):
+                error_idx = idx2
+                break
+
+            # 영어가 사라졌는가
+            alphabet_pattern = r"[a-zA-Z]"
+            if not re.search(alphabet_pattern, iw1) and re.search(alphabet_pattern, iw2):
+                error_idx = idx1
+                break
+            elif re.search(alphabet_pattern, iw1) and not re.search(alphabet_pattern, iw2):
+                error_idx = idx2
+                break
+
+            # 받침이 사라졌는가
+            len_iw1, len_iw2 = len(jamo_iw1), len(jamo_iw2)
+            if len_iw1 < len_iw2:
+                error_idx = idx1
+                break
+            elif len_iw1 > len_iw2:
+                error_idx = idx2
+                break
+
+            # 쌍자음이 생겨났는가
+            for single_iw1, single_iw2 in zip(list(iw1)[:min(len(iw1), len(iw2))], list(iw2)[:min(len(iw1), len(iw2))]):
+                jamo_single_iw1, jamo_single_iw2 = j2hcj(h2j(single_iw1)), j2hcj(h2j(single_iw2))
+                double_pattern = r"ㄲ|ㄸ|ㅃ|ㅆ|ㅉ"
+                if re.search(double_pattern, jamo_single_iw1[0]) and not re.search(double_pattern, jamo_single_iw2[0]):
+                    error_idx = idx1
+                    break
+                elif not re.search(double_pattern, jamo_single_iw1[0]) and re.search(double_pattern, jamo_single_iw2[0]):
+                    error_idx = idx2
+                    break
+            if error_idx:
+                break
+        
+        # 남은 문장들에 대해 G2P 변환기를 써서 일치하는 지 확인
+        if not error_idx:
+            if e2.input_text == g2p(e1.input_text, descriptive=False) or e2.input_text == g2p(e1.input_text, descriptive=True):
+                error_idx = idx1
+            elif e1.input_text == g2p(e2.input_text, descriptive=False) or e1.input_text == g2p(e2.input_text, descriptive=True):
+                error_idx = idx2
+
+        if error_idx:
+            error_indices.append(error_idx)
+            error_idx = None
+
+    print("G2P Removed:", len(error_indices)) # G2P 에러로 판단되어 제거된 에러의 개수
+
+    df_ge = df.drop(index=error_indices)
+
+    return df_ge
