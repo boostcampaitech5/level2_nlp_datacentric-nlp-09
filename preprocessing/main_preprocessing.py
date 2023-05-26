@@ -36,6 +36,7 @@ class SequentialPreprocessing:
 
 def load_yaml():
     config_file = None
+
     with open(f"./config/config.yaml") as f:
         config_file = yaml.load(f, Loader=yaml.FullLoader)
     config = namedtuple("config", config_file.keys())
