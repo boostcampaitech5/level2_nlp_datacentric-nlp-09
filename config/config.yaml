@@ -1,0 +1,13 @@
+# 적용할 csv파일 경로
+input_csv_path : ./data/train.csv
+# 저장될 csv파일 경로와 이름
+output_csv_path : ./data/new_train.csv
+
+
+#data_augmentation 을 적용하려면 앞에 DA.를 붙여주세요
+#data_cleaning 을 적용하려면 앞에 DC.를 붙여주세요
+#example) DC.clean_word
+
+data_preprocessing:
+  - DC.temp_cleaning
+  - DA.temp_aug
