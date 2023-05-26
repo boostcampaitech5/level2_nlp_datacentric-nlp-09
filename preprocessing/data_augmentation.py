@@ -1,2 +1,3 @@
 def temp_aug(df):
-  return df
+    new_df = df.copy()
+    return new_df

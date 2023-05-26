@@ -29,8 +29,13 @@ class SequentialPreprocessing:
         """
         if self.preprocessing_list:
             for method in self.preprocessing_list:
-                preprocessing_method = eval(method)
-                df = preprocessing_method(df)
+                if "DC" in method:
+                    preprocessing_method = eval(method)
+                    df = preprocessing_method(df)
+                else:
+                    preprocessing_method = eval(method)
+                    aug_data = preprocessing_method(df)
+                    df = pd.concat([df, aug_data])
         return df
 
 
