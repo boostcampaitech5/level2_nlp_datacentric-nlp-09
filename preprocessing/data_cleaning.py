@@ -15,8 +15,8 @@ def add_label_in_text(df):
     Returns:
         DataFrame: 함수 적용 된 train data
     """
-    label_dict = {0: "정치", 1: "경제", 2: "사회",
-                  3: "생활문화", 4: "세계", 5: "IT과학", 6: "스포츠"}
+    label_dict = {0: "IT과학", 1: "경제", 2: "사회",
+                  3: "생활문화", 4: "세계", 5: "스포츠", 6: "정치"}
 
     for index in range(len(df)):
         label = df["target"][index]
