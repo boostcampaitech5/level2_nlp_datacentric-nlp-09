@@ -84,9 +84,29 @@ def change2df(data_path, new_data):
     return ag_data
 
 
+def preprocessing(df):
+    """
+    전처리 함수
+
+    Args:
+        df (DataFrame): 생성된 문장
+
+    Returns:
+        DataFrame: 전처리 된 문장
+    """
+    # 양쪽 공백 제거
+    df['text'] = df['text'].str.strip()
+    # 10글자 미만 제거
+    # ex) "[오늘의 국회일정](24일·수)" 전처리하면 "24일·수"만 남음
+    df = df[df['text'].str.len() > 10]
+
+    return df
+
+
 if __name__ == "__main__":
     data_path = "./data/train_v0.csv"
     model, tokenizer = set_model()
     new_data = generation(model, tokenizer, data_path)
     new_df = change2df(data_path, new_data)
+    new_df = preprocessing(new_df)
     new_df.to_csv("./data/train_v0.3.csv", index=False)
