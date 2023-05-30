@@ -226,3 +226,5 @@ data/*
 config/*
 submission/*
 eda/*
+/output
+/wandb
