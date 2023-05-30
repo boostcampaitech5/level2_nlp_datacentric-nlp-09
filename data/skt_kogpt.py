@@ -88,7 +88,7 @@ def preprocessing(df):
     # 양쪽 공백 제거
     df['text'] = df['text'].str.strip()
     # 10글자 미만 제거
-    # ex) "[오늘의 국회일정](24일·수)" 전처리하면 "24일·수"만 남음
+    # 10글자 이하 불완전한 문장 제거
     df = df[df['text'].str.len() > 10]
 
     return df
