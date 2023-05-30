@@ -18,7 +18,7 @@ def find_g2p_suspicious(df):
     G2P_suspicious = pd.DataFrame()
     g2p = G2p()
     print("[Finding G2P Suspicious]")
-    for idx, td in tqdm(total_data.iterrows(), total=len(total_data)):
+    for idx, td in tqdm(df.iterrows(), total=len(df)):
         if g2p(td.text, descriptive=False) == td.text or g2p(td.text, descriptive=True) == td.text:
             td_df = pd.DataFrame(td).transpose()
             G2P_suspicious = pd.concat([G2P_suspicious, td_df], ignore_index=False)

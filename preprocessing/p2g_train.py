@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 
 from torch.utils.data import Dataset, DataLoader
-from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
+from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer, default_data_collator
 from sklearn.model_selection import train_test_split
-from transformers import Trainer, TrainingArguments
+from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 from nltk.translate.bleu_score import corpus_bleu
 
 import os
@@ -26,7 +26,7 @@ print("DEVICE:", DEVICE)
 
 BASE_DIR = os.getcwd()
 DATA_DIR = os.path.join(BASE_DIR, '../data')
-OUTPUT_DIR = os.path.join(BASE_DIR, '../p2g/best_p2g_model')
+OUTPUT_DIR = os.path.join(BASE_DIR, '../p2g_model')
 
 model_name = "facebook/m2m100_418M"
 
@@ -63,7 +63,7 @@ class PhonemeGraphemeDataset(Dataset):
         return {
             "input_ids": phoneme_inputs["input_ids"].squeeze(),
             "attention_mask": phoneme_inputs["attention_mask"].squeeze(),
-            "labels": grapheme_labels["input_ids"].squeeze()
+            "label_ids": grapheme_labels["input_ids"].squeeze()
         }
 
 # 모델 초기화
@@ -91,22 +91,22 @@ train_dataset = PhonemeGraphemeDataset(train_phoneme, train_grapheme)
 eval_dataset = PhonemeGraphemeDataset(eval_phoneme, eval_grapheme)
 
 # TrainingArguments 설정
-training_args = TrainingArguments(
+training_args = Seq2SeqTrainingArguments(
     output_dir=OUTPUT_DIR,
     learning_rate=1e-5,
     lr_scheduler_type='linear',
     weight_decay=0.01,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
-    num_train_epochs=5,
+    per_device_train_batch_size=32,
+    per_device_eval_batch_size=32,
+    num_train_epochs=2,
     save_total_limit=1,
     logging_dir="./logs",
     logging_strategy='steps',
     evaluation_strategy='steps',
     save_strategy='steps',
-    logging_steps=100,
-    eval_steps=500,
-    save_steps=500,
+    logging_steps=50,
+    eval_steps=250,
+    save_steps=250,
     seed=SEED,
     report_to="wandb",
 )
@@ -116,30 +116,31 @@ criterion = nn.CrossEntropyLoss()
 
 # 학습 및 평가 함수 정의
 def compute_metrics(pred):
-    preds = pred.predictions.argmax(-1)
-    labels = pred.label_ids
-
-    # Convert predictions and labels to numpy arrays
-    preds = preds.cpu().numpy()
-    labels = labels.cpu().numpy()
+    pred_ids = pred.predictions[0]
+    label_ids = pred.label_ids
 
     # Calculate BLEU score
-    bleu_score = corpus_bleu([[label] for label in labels], preds)
+    bleu_score = corpus_bleu([[label] for label in label_ids], pred_ids)
 
     return {"BLEU": bleu_score}
 
+def preprocess_logits_for_metrics(logits, labels):
+    pred_ids = torch.argmax(logits[0], dim=-1)
+    return pred_ids, labels
+
 # WandB 초기화
-wandb.init(project="data_centric_p2g", name='baseline')
+wandb.init(project="data_centric_p2g", name='baseline_418M')
 
 # Trainer 초기화
-trainer = Trainer(
+trainer = Seq2SeqTrainer(
     model=model,
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
-    data_collator=None,
+    data_collator=default_data_collator,
     tokenizer=tokenizer,
     compute_metrics=compute_metrics,
+    preprocess_logits_for_metrics=preprocess_logits_for_metrics,
 )
 
 # 모델 훈련
