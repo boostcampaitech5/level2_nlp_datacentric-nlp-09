@@ -225,3 +225,7 @@ code/*
 config/*
 submission/*
 *.csv
+
+# poetry
+poetry.lock
+pyproject.toml
