@@ -229,3 +229,7 @@ submission/*
 # poetry
 poetry.lock
 pyproject.toml
+
+output/*
+wandb/*
+nohup.out
