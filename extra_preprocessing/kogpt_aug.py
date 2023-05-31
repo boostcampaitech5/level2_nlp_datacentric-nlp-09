@@ -82,8 +82,8 @@ if __name__ == "__main__":
     api_key = os.environ.get("KoGPT_KEY")
     api = KoGPT(api_key)
 
-    train_path = "/opt/ml/level2_nlp_datacentric-nlp-09/data/train_v0.csv"
-    save_path = f"/opt/ml/level2_nlp_datacentric-nlp-09/data/train_{version}.csv"
+    train_path = "./data/train_v0.csv"
+    save_path = f"./data/train_{version}.csv"
 
     train_data = pd.read_csv(train_path)
     new_data_list = generate_sentence(train_data)
