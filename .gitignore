@@ -235,3 +235,7 @@ p2g_model_m2m100_large/*
 # poetry
 poetry.lock
 pyproject.toml
+
+analysis_images/
+p2g_model_bertshared/
+p2g_model_m2m100_small/
