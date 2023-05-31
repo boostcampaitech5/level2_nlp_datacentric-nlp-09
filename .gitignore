@@ -224,12 +224,18 @@ pyrightconfig.json
 code/*
 config/*
 submission/*
+eda/*
+output/*
+wandb/*
+nohup.out
+preprocessing/wandb
+p2g_model_m2m100_large/*
 *.csv
 
 # poetry
 poetry.lock
 pyproject.toml
 
-output/*
-wandb/*
-nohup.out
+analysis_images/
+p2g_model_bertshared/
+p2g_model_m2m100_small/
