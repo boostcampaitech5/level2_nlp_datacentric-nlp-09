@@ -226,5 +226,7 @@ data/*
 config/*
 submission/*
 eda/*
-/output
-/wandb
+output/*
+wandb
+preprocessing/wandb
+p2g_model_m2m100_large/*
