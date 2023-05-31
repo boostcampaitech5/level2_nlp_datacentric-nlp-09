@@ -92,12 +92,12 @@ def concat_with_origin(train_path, df, version):
     train_data = pd.read_csv(train_path)
     new_data = pd.concat((train_data, df), axis=0)
     new_data.to_csv(
-        f"/opt/ml/level2_nlp_datacentric-nlp-09/data/train_{version}.csv", index=False)
+        f"./data/train_{version}.csv", index=False)
 
 
 if __name__ == "__main__":
     # 데이터 버전 변경한 뒤 실행
-    train_path = "/opt/ml/level2_nlp_datacentric-nlp-09/data/train_v0.csv"
+    train_path = "./data/train_v0.csv"
     version = "v0.3"
 
     topics = ["정치", "경제", "사회", "생활문화", "세계", "IT과학", "스포츠"]
