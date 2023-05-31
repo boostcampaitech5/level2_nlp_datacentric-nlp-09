@@ -201,7 +201,7 @@ pyrightconfig.json
 
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
+.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -222,11 +222,16 @@ pyrightconfig.json
 
 
 code/*
-data/*
 config/*
 submission/*
 eda/*
 output/*
-wandb
+wandb/*
+nohup.out
 preprocessing/wandb
 p2g_model_m2m100_large/*
+*.csv
+
+# poetry
+poetry.lock
+pyproject.toml
