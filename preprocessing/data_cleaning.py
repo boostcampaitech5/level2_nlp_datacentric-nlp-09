@@ -2,7 +2,6 @@ import os
 import torch
 import pandas as pd
 from g2pk import G2p
-from jamo import h2j, j2hcj
 from tqdm import tqdm
 from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 
@@ -20,11 +19,13 @@ def temp_cleaning(df):
     return df
 
 
-def g2p_cleaning(df):
+def g2p_cleaning(df, find_g2p=True):
     """
     (1) DataFrame 형태의 데이터를 받아 G2P로 의심되는 데이터들을 선별
     (2) G2P 의심 데이터들에 대해 Seq2Seq 모델을 통한 grapheme 복원
     소요 시간 크니 실행에 유의
+
+    find_g2p: True인 경우 phoneme으로 의심되는 단어를 선별 후 P2G 복원, False인 경우 선별 없이 모두 P2G 복원 적용
 
     Args:
         df (pd.DataFrame): text 헤더를 포함한 DataFrame 데이터
@@ -33,7 +34,7 @@ def g2p_cleaning(df):
         df_converted (pd.DataFrame): G2P 의심 데이터들에 대해 grapheme 복원을 적용한 DataFrame 데이터
     """
     BASE_DIR = os.getcwd()
-    MODEL_DIR = os.path.join(BASE_DIR, '../p2g_model')
+    MODEL_DIR = os.path.join(BASE_DIR, '../p2g_model_m2m100_large')
 
     DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print("DEVICE:", DEVICE)
@@ -62,7 +63,7 @@ def g2p_cleaning(df):
 
         return G2P_suspicious
     
-    g2p_suspicious = find_g2p_suspicious(df)
+    g2p_suspicious = find_g2p_suspicious(df) if find_g2p else df
 
     # 모델과 토크나이저 초기화
     model_name = "facebook/m2m100_418M"
@@ -87,20 +88,19 @@ def g2p_cleaning(df):
         return converted_text
     
     # 각 문장 변환
+    print("[Converting Phonemes into Graphemes]")
     predictions = []
     for text in tqdm(g2p_suspicious["text"], total=len(g2p_suspicious)):
         converted_text = convert_text(text)
         converted_text = converted_text.replace("...", "…")
-        print(text)
-        print(converted_text)
         predictions.append(converted_text)
 
     # 예측 결과 저장
-    predictions_df = pd.DataFrame({"text": predictions})
     g2p_converted = g2p_suspicious.copy()
-    g2p_converted.text = predictions_df
+    g2p_converted.text = predictions
 
     df_converted = df.copy()
+    df_converted = df_converted[~df_converted.ID.isin(g2p_suspicious.ID)]
     for idx, gc in g2p_converted.iterrows():
         df_converted = pd.concat([df_converted, pd.DataFrame(gc).transpose()], ignore_index=True)
 

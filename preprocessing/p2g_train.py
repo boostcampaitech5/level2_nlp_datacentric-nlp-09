@@ -5,7 +5,9 @@ import pandas as pd
 import numpy as np
 
 from torch.utils.data import Dataset, DataLoader
-from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer, default_data_collator
+from transformers import EncoderDecoderModel, BertTokenizerFast, EncoderDecoderConfig
+from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
+from transformers import default_data_collator
 from sklearn.model_selection import train_test_split
 from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 from nltk.translate.bleu_score import corpus_bleu
@@ -26,9 +28,9 @@ print("DEVICE:", DEVICE)
 
 BASE_DIR = os.getcwd()
 DATA_DIR = os.path.join(BASE_DIR, '../data')
-OUTPUT_DIR = os.path.join(BASE_DIR, '../p2g_model')
+OUTPUT_DIR = os.path.join(BASE_DIR, '../p2g_model_multilingual')
 
-model_name = "facebook/m2m100_418M"
+model_name = "facebook/m2m100_1.2B" # facebook/m2m100_418M, kykim/bertshared-kor-base
 
 # 데이터셋 클래스 정의
 class PhonemeGraphemeDataset(Dataset):
@@ -67,10 +69,13 @@ class PhonemeGraphemeDataset(Dataset):
         }
 
 # 모델 초기화
-model = M2M100ForConditionalGeneration.from_pretrained(model_name)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
 tokenizer = M2M100Tokenizer.from_pretrained(model_name)
+# config = EncoderDecoderConfig.from_pretrained(model_name)
+# config.decoder_start_token_id = tokenizer.cls_token_id
+# config.pad_token_id = tokenizer.pad_token_id
+# model = EncoderDecoderModel.from_pretrained(model_name, config=config)
+model = M2M100ForConditionalGeneration.from_pretrained(model_name)
+model.to(DEVICE)
 
 # 데이터 불러오기
 phoneme_data = pd.read_csv(os.path.join(DATA_DIR, "total_phonemes.csv")).text
@@ -96,17 +101,17 @@ training_args = Seq2SeqTrainingArguments(
     learning_rate=1e-5,
     lr_scheduler_type='linear',
     weight_decay=0.01,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
     num_train_epochs=2,
     save_total_limit=1,
     logging_dir="./logs",
     logging_strategy='steps',
     evaluation_strategy='steps',
     save_strategy='steps',
-    logging_steps=50,
-    eval_steps=250,
-    save_steps=250,
+    logging_steps=100,
+    eval_steps=500,
+    save_steps=500,
     seed=SEED,
     report_to="wandb",
 )
@@ -129,7 +134,7 @@ def preprocess_logits_for_metrics(logits, labels):
     return pred_ids, labels
 
 # WandB 초기화
-wandb.init(project="data_centric_p2g", name='baseline_418M')
+wandb.init(project="data_centric_p2g", name='facebook/m2m100_1.2B')
 
 # Trainer 초기화
 trainer = Seq2SeqTrainer(

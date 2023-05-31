@@ -2,6 +2,7 @@ import os
 import torch
 import pandas as pd
 from tqdm import tqdm
+from transformers import EncoderDecoderModel, BertTokenizerFast, EncoderDecoderConfig
 from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
 
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -9,11 +10,14 @@ print("DEVICE:", DEVICE)
 
 BASE_DIR = os.getcwd()
 DATA_DIR = os.path.join(BASE_DIR, '../data')
-MODEL_DIR = os.path.join(BASE_DIR, '../p2g_model')
+MODEL_DIR = os.path.join(BASE_DIR, '../p2g_model_multilingual')
 
 # 모델과 토크나이저 초기화
-model_name = "facebook/m2m100_418M"
-tokenizer = M2M100Tokenizer.from_pretrained(model_name)
+tokenizer = M2M100Tokenizer.from_pretrained(MODEL_DIR)
+# config = EncoderDecoderConfig.from_pretrained(MODEL_DIR)
+# config.decoder_start_token_id = tokenizer.cls_token_id
+# config.pad_token_id = tokenizer.pad_token_id
+# model = EncoderDecoderModel.from_pretrained(MODEL_DIR, config=config)
 model = M2M100ForConditionalGeneration.from_pretrained(MODEL_DIR)
 model.to(DEVICE)
 
@@ -40,4 +44,4 @@ for text in tqdm(phonemes_test["text"], total=len(phonemes_test)):
 predictions_df = pd.DataFrame({"text": predictions})
 phonemes_test_converted = phonemes_test.copy()
 phonemes_test_converted.text = predictions_df
-phonemes_test_converted.to_csv(os.path.join(DATA_DIR, "g2p_suspicious_converted.csv"), index=False)
+phonemes_test_converted.to_csv(os.path.join(DATA_DIR, "g2p_suspicious_converted_m2m100_1.2B.csv"), index=False)
