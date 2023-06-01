@@ -1,8 +1,17 @@
-# 적용할 csv파일 경로
-input_csv_path : ./data/train.csv
-# 저장될 csv파일 경로와 이름
-output_csv_path : ./data/new_train.csv
+input_data:
+  dataset_train_csv: ../data/train_v0.12.1.csv
+  dataset_valid_csv: ../data/valid_v0.12.1.csv
 
+wandb:
+  project_name: data_centric
+  run_name: g2p_label_clean
+
+output_data:
+  output_dir: g2p_label_clean
+  image_dir: g2p_label_clean
+
+model:
+  model_checkpoint: 2000
 
 #data_augmentation 을 적용하려면 앞에 DA.를 붙여주세요
 #data_cleaning 을 적용하려면 앞에 DC.를 붙여주세요
